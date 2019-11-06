@@ -3,10 +3,24 @@ import os
 
 import praw
 
+from db import db
+
+
+LOGGING_ENABLED = bool(os.environ.get('LOGGING_ENABLED', False))
+
 
 def write_comment_to_database(comment):
-    print('-' * 20)
-    print(comment.body)
+    if LOGGING_ENABLED:
+        print(f'Comment: "{comment.body}"')
+    db.comments.insert_one({
+        'author': comment.author.name,
+        'body': comment.body,
+        'created_utc': comment.created_utc,
+        'id': comment.id,
+        'parent_id': comment.parent_id,
+        'subreddit': comment.subreddit.display_name,
+        'subreddit_id': comment.subreddit_id,
+    })
 
 
 def stream_subreddit_comments(reddit, subreddit, callback=None):
