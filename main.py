@@ -2,6 +2,7 @@ import argparse
 import os
 
 import praw
+from textblob import TextBlob
 
 from db import db
 
@@ -10,8 +11,15 @@ LOGGING_ENABLED = bool(os.environ.get('LOGGING_ENABLED', False))
 
 
 def write_comment_to_database(comment):
+    textblob_analysis = TextBlob(comment.body)
     if LOGGING_ENABLED:
         print(f'Comment by {comment.author}: "{comment.body}" at {comment.created_utc}')
+        print(
+            f'Analysis result - '
+            f'Polarity: {textblob_analysis.sentiment.polarity}, '
+            f'Subjectivity: {textblob_analysis.sentiment.subjectivity}'
+        )
+        print('-' * 50)
     db.comments.insert_one({
         'author': comment.author.name,
         'body': comment.body,
@@ -20,6 +28,8 @@ def write_comment_to_database(comment):
         'parent_id': comment.parent_id,
         'subreddit': comment.subreddit.display_name,
         'subreddit_id': comment.subreddit_id,
+        'sentiment_polarity': textblob_analysis.polarity,
+        'sentiment_subjectivity': textblob_analysis.subjectivity,
     })
 
 
